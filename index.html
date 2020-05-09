@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    
+    <link rel="stylesheet" href="css/style.css">
+
+    <script src="node_modules/three/build/three.min.js"></script>
+    <script src="deplacement.js"></script>
+    <script src="generateCube.js"></script>
+    <script src="missiles.js"></script>
+    <style>
+    
+    </style>
+    <title>TP6</title>
+</head>
+<body>
+
+    <script>
+
+    var scene, camera, renderer, controls, animation;
+    var texture, textureCovid, textureH1n1, textureGrippe, textureLaser, texturePillule, texturePlayer;
+
+    textureCovid = new THREE.TextureLoader().load('./virus.png');
+    textureH1n1 = new THREE.TextureLoader().load('./h1n1.png');
+    textureGrippe = new THREE.TextureLoader().load('./grippe.png');
+    textureLaser = new THREE.TextureLoader().load('./laser.png');
+    texturePillule = new THREE.TextureLoader().load('./images/pillule.png');
+    texturePlayer = new THREE.TextureLoader().load('./images/infirmiere.png');
+
+
+    var clock = new THREE.Clock();
+    var clockLaser = new THREE.Clock();
+    var delta = 0;
+
+    var ennemies = [];
+    var typeEnnemies = [];
+    var morts = [];
+    var missiles = [];
+    var laser = null;
+    var points=0;
+    var hp=100;
+
+    
+    init();
+    addElementHTML();
+    animate();
+    addevent();
+
+    function init() {
+
+        scene = new THREE.Scene();
+        camera = new THREE.OrthographicCamera(window.innerWidth / -2, 
+        window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / -2, 1, 1000);
+        camera.position.z = 800;
+
+        renderer = new THREE.WebGLRenderer();
+        renderer.setSize( window.innerWidth, window.innerHeight );
+        document.body.appendChild( renderer.domElement );
+
+        loadShip();
+        clock.start();
+
+        texture = new THREE.TextureLoader().load('./fond3.jpg');
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        var geometry = new THREE.PlaneGeometry( 1000, window.innerHeight, 32 );
+        var material = new THREE.MeshBasicMaterial( {map: texture} );
+        var plane = new THREE.Mesh( geometry, material );
+        scene.add( plane );
+        
+        typeEnnemies.push(textureCovid);
+        typeEnnemies.push(textureH1n1);
+        typeEnnemies.push(textureGrippe);
+    }
+
+
+    function addElementHTML(){
+        //Score
+        var para = document.createElement('p');
+        para.setAttribute('id','parascore');
+        var score = document.createElement("span");
+        score.setAttribute('id','points');
+        var content = document.createTextNode(points);
+        score.appendChild(content);
+        var contentpara = document.createTextNode("Score: ");
+        para.append(contentpara, score);
+        var currentDiv = document.getElementById('div1');
+        document.body.insertBefore(para, currentDiv);
+
+
+        //Vie
+        var paravie = document.createElement('p');
+        paravie.setAttribute('id','paravie');
+        var vie = document.createElement("span");
+        vie.setAttribute('id','vie');
+        var contentvie = document.createTextNode(hp);
+        vie.appendChild(contentvie);
+        var contentparavie = document.createTextNode("Vie: ");
+        paravie.append(contentparavie, vie);
+        document.body.insertBefore(paravie, currentDiv);
+
+        //aide touches 
+        var aide = document.createElement('div');
+        aide.setAttribute('id','aide');
+        var fleche = document.createElement('p');
+        var clickGauche = document.createElement('p');
+        var clickDroite = document.createElement('p');
+
+        var contentFleche = document.createTextNode('Déplacement : fleches directionnelles');
+        var contentClG = document.createTextNode('Missile : click gauche');
+        var contentClD = document.createTextNode('Laser : click droit');
+
+        fleche.appendChild(contentFleche);
+        clickGauche.appendChild(contentClG);
+        clickDroite.appendChild(contentClD);
+        aide.append(fleche,clickGauche,clickDroite);
+        document.body.insertBefore(aide, currentDiv);
+    }
+
+
+    function loadShip() {
+        var geometryShip = new THREE.BoxGeometry(50, 50, 0);
+        var materialShip = new THREE.MeshBasicMaterial({map: texturePlayer});
+        ship = new THREE.Mesh(geometryShip, materialShip);
+        ship.position.y = -(window.innerHeight - 50) / 2;
+        scene.add(ship);
+    }
+
+
+    function animate() {
+        animation = requestAnimationFrame(function() {
+            animate();
+        });
+        if(clock.getElapsedTime() > 2.0){
+            generateCube();
+            clock.start();
+        }
+        /*if(clockLaser.getElapsedTime() > 1.0){
+            scene.remove(laser);
+            laser = null;
+        }*/
+        if(laser != null){
+            laser.material.opacity -= 0.03;
+            console.log("op " + laser.material.opacity);
+            if(laser.material.opacity <= 0){
+                scene.remove(laser);
+                laser = null;
+            }
+        }
+        moovePlayer();
+        animateEnnemies();
+        collision();
+        animateMissile();
+        laserTouche();
+        animationMorts();
+        texture.offset.y +=0.018;
+        
+        //On passe les objets à placer au renderer
+        renderer.render(scene, camera);
+    }
+
+
+    </script>
+    
+</body>
+</html>
